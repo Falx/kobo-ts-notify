@@ -148,14 +148,12 @@
 
         <mat-card-content>
           <div class="badges">
-            <mat-chip [class]="'chip-' + deal.source" [disabled]="true">
-              {{ deal.source }}
-            </mat-chip>
+            <span class="tag tag-{{ deal.source }}">{{ deal.source }}</span>
             @if (deal.isNew) {
-              <mat-chip class="chip-new" [disabled]="true">New</mat-chip>
+              <span class="tag tag-new">new</span>
             }
             @if (deal.isPriceDrop) {
-              <mat-chip class="chip-drop" [disabled]="true">▼ Drop</mat-chip>
+              <span class="tag tag-drop">drop</span>
             }
           </div>
 
@@ -171,8 +169,6 @@
               <span class="was-price">{{ formatPrice(deal.wasPriceEur) }}</span>
             }
           </div>
-
-          <mat-divider />
 
           <div class="meta">
             <span>First seen <b>{{ formatDate(deal.firstSeen) }}</b></span>
