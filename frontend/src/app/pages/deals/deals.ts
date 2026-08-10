@@ -11,6 +11,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatDividerModule } from '@angular/material/divider';
 import { ApiService } from '../../shared/api.service';
 import type { Deal, SortKey } from '../../shared/models';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-deals',
@@ -24,6 +25,7 @@ import type { Deal, SortKey } from '../../shared/models';
     MatIconModule,
     MatProgressSpinnerModule,
     MatDividerModule,
+    DatePipe,
   ],
   templateUrl: './deals.html',
   styleUrl: './deals.css',
@@ -32,6 +34,7 @@ export class DealsPage implements OnInit, OnDestroy {
   private readonly api = inject(ApiService);
   private readonly searchDebounce = new Subject<void>();
   private readonly subs: Subscription[] = [];
+  private readonly datePipe = inject(DatePipe);
 
   protected readonly deals = signal<Deal[]>([]);
   protected readonly loading = signal(false);
@@ -132,7 +135,7 @@ export class DealsPage implements OnInit, OnDestroy {
 
   protected formatDate(value: string): string {
     if (!value) return '—';
-    return new Date(value).toLocaleString();
+    return this.datePipe.transform(value, 'MMM d, yyyy @ HH:mm') || '—';
   }
 }
 
