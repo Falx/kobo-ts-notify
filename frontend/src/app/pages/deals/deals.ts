@@ -25,8 +25,8 @@ import { DatePipe } from '@angular/common';
     MatIconModule,
     MatProgressSpinnerModule,
     MatDividerModule,
-    DatePipe,
   ],
+  providers: [DatePipe],
   templateUrl: './deals.html',
   styleUrl: './deals.css',
 })
