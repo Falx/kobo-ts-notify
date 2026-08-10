@@ -1,0 +1,37 @@
+# Kobo Deal Notifier (TypeScript) — docker compose
+#
+# First run: copy .env.example to .env and fill in your values.
+#
+#   cp .env.example .env
+#   docker compose up -d --build
+#
+# Services:
+#   backend  — NestJS API + daily scheduler on :3000
+#   frontend — Angular 22 static build served by nginx on :8080 (proxies /api)
+#
+# Data (SQLite settings/state, tokens.json, dry-run summaries) persists on the
+# host under ./data via the mounted volume.
+
+services:
+  backend:
+    build:
+      context: ./backend
+    container_name: kobo-ts-backend
+    env_file: .env
+    environment:
+      TZ: ${TZ:-Europe/Brussels}
+    volumes:
+      - ./data:/app/data # kobo.db + tokens.json + summary-*.html (persisted on host)
+    ports:
+      - "3000:3000"
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+    container_name: kobo-ts-frontend
+    ports:
+      - "8080:80"
+    depends_on:
+      - backend
+    restart: unless-stopped

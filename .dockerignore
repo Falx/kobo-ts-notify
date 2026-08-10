@@ -1,0 +1,7 @@
+# Build context root for docker compose (./backend, ./frontend)
+node_modules
+dist
+data
+.env
+.git
+*.log

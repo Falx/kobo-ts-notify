@@ -1,0 +1,199 @@
+.page-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.page-header h1 {
+  margin: 0 0 0.25rem;
+  font-weight: 500;
+}
+
+.subtitle {
+  margin: 0;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.error-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 1rem;
+  color: var(--mat-sys-error);
+}
+
+.loader {
+  display: flex;
+  justify-content: center;
+  padding: 3rem 0;
+}
+
+.empty {
+  text-align: center;
+  padding: 2.5rem 1rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  width: 3rem;
+  height: 3rem;
+  opacity: 0.5;
+}
+
+.run-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.run-no {
+  font-weight: 600;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.chip-running {
+  --mat-chip-selected-label-text-color: var(--mat-sys-primary);
+}
+
+.chip-success {
+  --mat-chip-selected-label-text-color: #2e7d32;
+}
+
+.chip-failed {
+  --mat-chip-selected-label-text-color: #c62828;
+}
+
+.spin {
+  animation: spin 1.2s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.run-desc {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.run-desc .when {
+  color: var(--mat-sys-on-surface-variant);
+  font-size: 0.85rem;
+}
+
+.stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding: 0.5rem 0 0.75rem;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  min-width: 64px;
+}
+
+.stat-value {
+  font-size: 1.15rem;
+  font-weight: 600;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  color: var(--mat-sys-on-surface-variant);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.stat.highlight .stat-value {
+  color: var(--mat-sys-primary);
+}
+
+.run-error {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  color: var(--mat-sys-error);
+  font-size: 0.9rem;
+}
+
+.mini-loader {
+  display: flex;
+  justify-content: center;
+  padding: 1.5rem 0;
+}
+
+.hint {
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.deal-list {
+  display: flex;
+  flex-direction: column;
+}
+
+.deal-row {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-top: 1px solid var(--mat-sys-outline-variant);
+}
+
+.deal-row:first-child {
+  border-top: none;
+}
+
+.deal-price {
+  font-weight: 600;
+  min-width: 56px;
+}
+
+.deal-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.deal-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.deal-author {
+  font-size: 0.8rem;
+  color: var(--mat-sys-on-surface-variant);
+}
+
+.deal-badges {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.chip-new,
+.chip-drop,
+.chip-bestdeals {
+  --mat-chip-selected-label-text-color: var(--mat-sys-on-surface);
+}
+
+.chip-new::part(label) {
+  color: #2e7d32;
+}
+
+.chip-drop::part(label) {
+  color: #c62828;
+}
+
+.chip-bestdeals::part(label) {
+  color: #1565c0;
+}

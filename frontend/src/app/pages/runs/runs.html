@@ -1,0 +1,134 @@
+<div class="page-header">
+  <div>
+    <h1>Runs</h1>
+    <p class="subtitle">Every scheduled or manual check, newest first.</p>
+  </div>
+  <div class="actions">
+    <button mat-stroked-button (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+  </div>
+</div>
+
+@if (error()) {
+  <mat-card class="error-bar">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </mat-card>
+}
+
+@if (loading() && runs().length === 0) {
+  <div class="loader">
+    <mat-progress-spinner diameter="40" mode="indeterminate" />
+  </div>
+}
+
+@if (!loading() && runs().length === 0) {
+  <mat-card class="empty">
+    <mat-icon class="empty-icon">history</mat-icon>
+    <p>No runs yet. Press "Check now" on the Deals page to trigger the first one.</p>
+  </mat-card>
+}
+
+@if (runs().length > 0) {
+  <mat-accordion multi="false">
+    @for (run of runs(); track run.id) {
+      <mat-expansion-panel
+        [expanded]="openRuns().has(run.id)"
+        (expandedChange)="toggleDetails(run.id)"
+      >
+        <mat-expansion-panel-header>
+          <mat-panel-title class="run-title">
+            <span class="run-no">#{{ run.id }}</span>
+            <mat-chip class="chip-{{ run.status }}" [disabled]="true">
+              @if (run.status === 'running') {
+                <mat-icon class="spin">sync</mat-icon>
+              } @else if (run.status === 'failed') {
+                <mat-icon>error</mat-icon>
+              } @else if (run.status === 'success') {
+                <mat-icon>check_circle</mat-icon>
+              }
+              {{ statusLabel(run.status) }}
+            </mat-chip>
+          </mat-panel-title>
+          <mat-panel-description class="run-desc">
+            <span>{{ run.dealsFound }} deal{{ run.dealsFound === 1 ? '' : 's' }}</span>
+            <span class="when">{{ formatDate(run.startedAt) }}</span>
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+
+        <div class="stats">
+          <div class="stat">
+            <span class="stat-value">{{ run.itemsScanned }}</span>
+            <span class="stat-label">Scanned</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ run.dealsFound }}</span>
+            <span class="stat-label">Found</span>
+          </div>
+          <div class="stat highlight">
+            <span class="stat-value">{{ run.newDeals }}</span>
+            <span class="stat-label">New</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ run.priceDrops }}</span>
+            <span class="stat-label">Drops</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ run.notified }}</span>
+            <span class="stat-label">Notified</span>
+          </div>
+          <div class="stat">
+            <span class="stat-value">{{ duration(run) }}</span>
+            <span class="stat-label">Duration</span>
+          </div>
+        </div>
+
+        @if (run.error) {
+          <p class="run-error">
+            <mat-icon>warning</mat-icon>
+            {{ run.error }}
+          </p>
+        }
+
+        @if (loadingDeal() === run.id) {
+          <div class="mini-loader">
+            <mat-progress-spinner diameter="28" mode="indeterminate" />
+          </div>
+        } @else {
+          @if ((cache.get(run.id) ?? []).length === 0) {
+            <p class="hint">No deals recorded for this run.</p>
+          } @else {
+            <div class="deal-list">
+              @for (deal of cache.get(run.id); track deal.productId) {
+                <div class="deal-row">
+                  <span class="deal-price">{{ formatPrice(deal.priceEur) }}</span>
+                  <div class="deal-info">
+                    <span class="deal-title" [title]="deal.title">{{ deal.title }}</span>
+                    <span class="deal-author">{{ deal.author }}</span>
+                  </div>
+                  <div class="deal-badges">
+                    @if (deal.isNew) {
+                      <mat-chip class="chip-new" [disabled]="true">New</mat-chip>
+                    }
+                    @if (deal.isPriceDrop) {
+                      <mat-chip class="chip-drop" [disabled]="true">Drop</mat-chip>
+                    }
+                    @if (deal.source === 'bestdeals') {
+                      <mat-chip class="chip-bestdeals" [disabled]="true">BestDeals</mat-chip>
+                    }
+                  </div>
+                  <a mat-icon-button [href]="deal.url" target="_blank" rel="noopener"
+                    aria-label="Open on Kobo">
+                    <mat-icon>open_in_new</mat-icon>
+                  </a>
+                </div>
+              }
+            </div>
+          }
+        }
+      </mat-expansion-panel>
+    }
+  </mat-accordion>
+}

@@ -1,0 +1,32 @@
+:host {
+  display: block;
+}
+
+.topbar {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  gap: 0.5rem;
+}
+
+.brand {
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  margin-right: 1.5rem;
+}
+
+.nav {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.nav a.active {
+  background: rgba(255, 255, 255, 0.16);
+  border-radius: 8px;
+}
+
+.content {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding: 1.25rem 1rem 3rem;
+}

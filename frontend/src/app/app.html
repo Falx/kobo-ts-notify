@@ -1,0 +1,13 @@
+<mat-toolbar color="primary" class="topbar">
+  <mat-icon class="brand-icon" aria-hidden="false">menu_book</mat-icon>
+  <span class="brand">Kobo Deals</span>
+  <nav class="nav">
+    <a mat-button routerLink="/deals" routerLinkActive="active">Deals</a>
+    <a mat-button routerLink="/runs" routerLinkActive="active">Runs</a>
+    <a mat-button routerLink="/settings" routerLinkActive="active">Settings</a>
+  </nav>
+</mat-toolbar>
+
+<div class="content">
+  <router-outlet />
+</div>

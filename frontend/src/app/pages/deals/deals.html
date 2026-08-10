@@ -1,0 +1,193 @@
+<div class="page-header">
+  <div>
+    <h1>Deals</h1>
+    <p class="subtitle">
+      {{ deals().length }} deal{{ deals().length === 1 ? '' : 's' }} matching your rules, from the latest run.
+    </p>
+  </div>
+  <div class="actions">
+    <button mat-stroked-button (click)="refresh()">
+      <mat-icon>refresh</mat-icon>
+      Refresh
+    </button>
+    <button mat-flat-button color="primary" [disabled]="running()" (click)="runNow()">
+      <mat-icon>play_arrow</mat-icon>
+      {{ running() ? 'Running…' : 'Check now' }}
+    </button>
+  </div>
+</div>
+
+@if (message()) {
+  <mat-card class="info-bar">
+    <mat-icon>info</mat-icon>
+    <span>{{ message() }}</span>
+  </mat-card>
+}
+@if (error()) {
+  <mat-card class="error-bar">
+    <mat-icon>error</mat-icon>
+    <span>{{ error() }}</span>
+  </mat-card>
+}
+
+<div class="filter-toolbar">
+  <div class="search-row">
+    <div class="search-wrapper">
+      <mat-icon class="search-icon">search</mat-icon>
+      <input
+        class="search-input"
+        type="text"
+        [value]="q()"
+        (input)="onSearchChange($any($event.target).value)"
+        placeholder="Search title or author…"
+      />
+      @if (q()) {
+        <button mat-icon-button class="clear-search" (click)="q.set(''); load()" aria-label="Clear search">
+          <mat-icon>close</mat-icon>
+        </button>
+      }
+    </div>
+  </div>
+
+  <div class="controls-row">
+    <div class="control-group">
+      <mat-form-field appearance="outline" class="compact">
+        <mat-label>Source</mat-label>
+        <mat-select [value]="source()" (selectionChange)="source.set($event.value); load()">
+          <mat-option value="">All sources</mat-option>
+          <mat-option value="wishlist">Wishlist</mat-option>
+          <mat-option value="bestdeals">BestDeals</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="compact">
+        <mat-label>Min Discount</mat-label>
+        <mat-select [value]="minDiscount()" (selectionChange)="minDiscount.set($event.value); load()">
+          <mat-option [value]="0">Any</mat-option>
+          <mat-option [value]="10">10%+</mat-option>
+          <mat-option [value]="20">20%+</mat-option>
+          <mat-option [value]="40">40%+</mat-option>
+          <mat-option [value]="60">60%+</mat-option>
+        </mat-select>
+      </mat-form-field>
+
+      <mat-form-field appearance="outline" class="compact">
+        <mat-label>Sort by</mat-label>
+        <mat-select [value]="sort()" (selectionChange)="sort.set($event.value); load()">
+          <mat-option value="discount-desc">Biggest discount</mat-option>
+          <mat-option value="price-asc">Lowest price</mat-option>
+          <mat-option value="price-desc">Highest price</mat-option>
+          <mat-option value="latest">Most recent</mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+
+    <mat-divider [vertical]="true" class="control-divider"></mat-divider>
+
+    <mat-chip-listbox class="toggles" multiple>
+      <mat-chip-option
+        [selected]="onlyNew()"
+        (selectionChange)="onlyNew.set($event.selected); load()"
+      >
+        <mat-icon matChipAvatar>fiber_new</mat-icon>
+        New only
+      </mat-chip-option>
+      <mat-chip-option
+        [selected]="onlyDrop()"
+        (selectionChange)="onlyDrop.set($event.selected); load()"
+      >
+        <mat-icon matChipAvatar>arrow_downward</mat-icon>
+        Price drop
+      </mat-chip-option>
+    </mat-chip-listbox>
+
+    @if (activeFilterCount() > 0) {
+      <mat-divider [vertical]="true" class="control-divider"></mat-divider>
+
+      <div class="active-filters">
+        <span class="filter-count-badge">{{ activeFilterCount() }}</span>
+        <span class="filter-count-label">active</span>
+        <button mat-button class="clear-all-btn" (click)="clearFilters()">Clear all</button>
+      </div>
+    }
+  </div>
+</div>
+
+@if (loading()) {
+  <div class="loader">
+    <mat-progress-spinner diameter="40" mode="indeterminate" />
+  </div>
+}
+
+@if (!loading() && deals().length === 0) {
+  <mat-card class="empty">
+    <mat-icon class="empty-icon">local_library</mat-icon>
+    <p>No deals found with the current filters.</p>
+    <p class="hint">Run a check, or start pairing in Settings if Kobo isn't connected yet.</p>
+  </mat-card>
+}
+
+@if (!loading() && deals().length > 0) {
+  <div class="grid">
+    @for (deal of deals(); track deal.productId) {
+      <mat-card class="deal-card" appearance="outlined">
+        <div class="cover">
+          @if (deal.coverUrl) {
+            <img [src]="deal.coverUrl" [alt]="deal.title" loading="lazy" />
+          } @else {
+            <div class="cover-fallback">
+              <mat-icon>auto_stories</mat-icon>
+            </div>
+          }
+          @if (deal.discountPercent != null && deal.discountPercent > 0 && !deal.isFree) {
+            <span class="discount-chip">-{{ deal.discountPercent }}%</span>
+          } @else if (deal.isFree) {
+            <span class="free-chip">FREE</span>
+          }
+        </div>
+
+        <mat-card-content>
+          <div class="badges">
+            <mat-chip [class]="'chip-' + deal.source" [disabled]="true">
+              {{ deal.source }}
+            </mat-chip>
+            @if (deal.isNew) {
+              <mat-chip class="chip-new" [disabled]="true">New</mat-chip>
+            }
+            @if (deal.isPriceDrop) {
+              <mat-chip class="chip-drop" [disabled]="true">▼ Drop</mat-chip>
+            }
+          </div>
+
+          <h2 class="title" [title]="deal.title">{{ deal.title }}</h2>
+          <p class="author">{{ deal.author || 'Unknown author' }}</p>
+          @if (deal.series) {
+            <p class="series">{{ deal.series }}</p>
+          }
+
+          <div class="price-row">
+            <span class="price">{{ formatPrice(deal.priceEur) }}</span>
+            @if (deal.wasPriceEur != null && deal.wasPriceEur > deal.priceEur) {
+              <span class="was-price">{{ formatPrice(deal.wasPriceEur) }}</span>
+            }
+          </div>
+
+          <mat-divider />
+
+          <div class="meta">
+            <span>First seen <b>{{ formatDate(deal.firstSeen) }}</b></span>
+            <span>Last seen <b>{{ formatDate(deal.lastSeen) }}</b></span>
+          </div>
+        </mat-card-content>
+
+        <mat-card-actions class="actions-row">
+          <span class="lang">{{ deal.language }}</span>
+          <a mat-button color="primary" [href]="deal.url" target="_blank" rel="noopener">
+            View on Kobo
+            <mat-icon>open_in_new</mat-icon>
+          </a>
+        </mat-card-actions>
+      </mat-card>
+    }
+  </div>
+}
