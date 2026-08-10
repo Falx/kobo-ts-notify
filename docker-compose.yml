@@ -22,8 +22,8 @@ services:
       TZ: ${TZ:-Europe/Brussels}
     volumes:
       - ./data:/app/data # kobo.db + tokens.json + summary-*.html (persisted on host)
-    ports:
-      - "3000:3000"
+    networks:
+      - data-net
     restart: unless-stopped
 
   frontend:
@@ -34,4 +34,10 @@ services:
       - "8080:80"
     depends_on:
       - backend
+    networks:
+      - data-net
     restart: unless-stopped
+
+networks:
+  data-net:
+    driver: bridge
