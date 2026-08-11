@@ -1,5 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import * as nodemailer from 'nodemailer';
+import sharp from 'sharp';
 import { writeFileSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { htmlEscape, capitalize } from './escape';
@@ -168,12 +169,15 @@ export class EmailService {
         if (!response.ok) continue;
         const bytes = Buffer.from(await response.arrayBuffer());
         if (bytes.length === 0) continue;
-        const raw = (response.headers.get('content-type') ?? '')
-          .split(';')[0]
-          .trim();
+
+        const resized = await sharp(bytes)
+          .resize({ width: 150, withoutEnlargement: true })
+          .jpeg({ quality: 80 })
+          .toBuffer();
+
         result.set(url, {
-          data: bytes,
-          mime: raw.startsWith('image/') ? raw : 'image/jpeg',
+          data: resized,
+          mime: 'image/jpeg',
         });
       } catch {
         // failed cover download → omit cover silently
@@ -190,24 +194,18 @@ export class EmailService {
     dateLabel: string,
   ): string {
     const cards = records.map((record, index) => {
-      const coverHtml =
+      const coverSrc =
         index < coversRealLimit(records, covers) && record.coverUrl
-          ? this.coverSrc(
-              record.coverUrl,
-              covers,
-              useDataUri,
-              index,
-              record.title,
-            )
+          ? this.getCoverSrc(record.coverUrl, covers, useDataUri, index)
           : '';
-      return this.cardHtml(record, index, coverHtml, previousPrices);
+      return this.cardHtml(record, index, coverSrc, previousPrices);
     });
 
     const summary = `${records.length} book(s) matching your deal rules`;
     const truncated = records.some(
       (r, i) => i >= coversRealLimit(records, covers) && r.coverUrl,
     )
-      ? '<p class="note">Some covers omitted (too many deals to embed).</p>'
+      ? '<p style="font-size:11px;color:#999;margin:8px 0 0;">Some covers omitted (too many deals to embed).</p>'
       : '';
 
     return [
@@ -215,37 +213,45 @@ export class EmailService {
       '<html lang="en">',
       '<head>',
       '<meta charset="utf-8">',
+      '<meta name="viewport" content="width=device-width, initial-scale=1.0">',
       `<title>Kobo deals for ${htmlEscape(dateLabel)}</title>`,
       '</head>',
       '<body style="margin:0;padding:20px;background:#f6f6f6;font-family:Arial,Helvetica,sans-serif;color:#222;">',
-      `<h1 style="font-size:22px;margin:0 0 4px;">Kobo deals for ${htmlEscape(dateLabel)}</h1>`,
-      `<p class="summary">${htmlEscape(summary)}</p>`,
-      ...cards,
+      '<!--[if mso]><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><![endif]-->',
+      `<h1 style="font-size:20px;margin:0 0 4px;">Kobo deals for ${htmlEscape(dateLabel)}</h1>`,
+      `<p style="font-size:13px;color:#555;margin:0 0 12px;">${htmlEscape(summary)}</p>`,
+      '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:700px;">',
+      ...cards.map((card, i) => {
+        if (i % 2 === 0)
+          return `<tr>\n<td width="50%" valign="top" style="padding:6px;">${card}</td>`;
+        return `<td width="50%" valign="top" style="padding:6px;">${card}</td>\n</tr>`;
+      }),
+      cards.length % 2 === 1 ? '</tr>' : '',
+      '</table>',
       truncated,
+      '<!--[if mso]></td></tr></table><![endif]-->',
       '</body>',
       '</html>',
     ].join('\n');
   }
 
-  private coverSrc(
+  private getCoverSrc(
     url: string,
     covers: Map<string, { data: Buffer; mime: string }>,
     useDataUri: boolean,
     index: number,
-    title: string,
   ): string {
     const payload = covers.get(url);
     if (!payload) return '';
-    const src = useDataUri
+    return useDataUri
       ? `data:${payload.mime};base64,${payload.data.toString('base64')}`
       : `cid:cover${index}`;
-    return `<img class="cover" src="${src}" alt="Cover of ${htmlEscape(title)}">`;
   }
 
   private cardHtml(
     record: DealRecord,
     index: number,
-    coverHtml: string,
+    coverSrc: string,
     previousPrices: Record<string, number>,
   ): string {
     const badge =
@@ -257,59 +263,64 @@ export class EmailService {
       ? `<a style="color:#1a4f8b;text-decoration:none;" href="${htmlEscape(record.url)}">${htmlEscape(record.title)}</a>`
       : htmlEscape(record.title);
 
+    const coverCell = coverSrc
+      ? `<td width="110" valign="top" style="padding:8px 0 8px 8px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
+      : '';
+
     const lines = [
-      '<div class="card" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:8px;padding:14px;margin:14px 0;overflow:hidden;">',
-      coverHtml,
-      '<div class="body" style="overflow:hidden;padding-left:8px;">',
-      '<div class="meta" style="margin-bottom:6px;">',
-      `<span class="badge" style="background:#0a7d30;color:#ffffff;font-size:11px;font-weight:bold;padding:2px 8px;border-radius:10px;">${badge}</span>`,
-      `<span class="source" style="background:#eeeeee;color:#555;font-size:11px;padding:2px 8px;border-radius:10px;margin-left:6px;">${source}</span>`,
+      '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;">',
+      '<tr>',
+      coverCell,
+      `<td valign="top" style="padding:8px;font-family:Arial,Helvetica,sans-serif;">`,
+      '<div style="margin-bottom:4px;">',
+      `<span style="background:#0a7d30;color:#ffffff;font-size:10px;font-weight:bold;padding:1px 6px;border-radius:8px;">${badge}</span>`,
+      ` <span style="background:#eeeeee;color:#555;font-size:10px;padding:1px 6px;border-radius:8px;">${source}</span>`,
       '</div>',
-      `<h3 style="font-size:16px;margin:0 0 2px;">${titleLink}</h3>`,
+      `<div style="font-size:13px;font-weight:bold;margin:0 0 2px;line-height:1.3;">${titleLink}</div>`,
     ];
     if (record.author) {
       lines.push(
-        `<p class="author" style="font-size:13px;color:#555;margin:0 0 2px;">by ${htmlEscape(record.author)}</p>`,
+        `<div style="font-size:11px;color:#555;margin:0 0 1px;">by ${htmlEscape(record.author)}</div>`,
       );
     }
     if (record.series) {
       lines.push(
-        `<p class="series" style="font-size:12px;color:#777;margin:0 0 2px;">${htmlEscape(record.series)}</p>`,
+        `<div style="font-size:10px;color:#777;margin:0 0 2px;">${htmlEscape(record.series)}</div>`,
       );
     }
     lines.push(
-      `<p class="price" style="font-size:14px;margin:6px 0 0;">${this.priceLine(record)}</p>`,
+      `<div style="font-size:12px;margin:4px 0 0;">${this.priceLine(record)}</div>`,
     );
 
     const prevPrice = previousPrices[record.productId];
     if (prevPrice !== undefined && record.priceEur < prevPrice) {
       lines.push(
-        `<p class="delta" style="font-size:12px;color:#7a7a7a;margin:2px 0 0;">Down from ${money(prevPrice)}</p>`,
+        `<div style="font-size:10px;color:#7a7a7a;margin:1px 0 0;">Down from ${money(prevPrice)}</div>`,
       );
     }
     if (record.language) {
       lines.push(
-        `<p class="language" style="font-size:11px;color:#999;margin:2px 0 0;">${htmlEscape(record.language)}</p>`,
+        `<div style="font-size:9px;color:#999;margin:1px 0 0;">${htmlEscape(record.language)}</div>`,
       );
     }
-    lines.push('</div></div>');
+    lines.push('</td></tr></table>');
     return lines.join('\n');
   }
 
   private priceLine(record: DealRecord): string {
     if (record.priceEur <= 0) {
-      return '<span class="price-free">FREE</span>';
+      return '<span style="color:#0a7d30;font-weight:bold;">FREE</span>';
     }
     const bits = [
-      `<span class="price-current">${money(record.priceEur)}</span>`,
+      `<span style="font-weight:bold;">${money(record.priceEur)}</span>`,
     ];
     if (record.wasPriceEur !== null && record.wasPriceEur > 0) {
       bits.push(
-        `<span class="price-was"><s>was ${money(record.wasPriceEur)}</s></span>`,
+        `<span style="color:#999;text-decoration:line-through;">was ${money(record.wasPriceEur)}</span>`,
       );
       if (record.discountPercent !== null) {
         bits.push(
-          `<span class="price-discount">-${record.discountPercent}%</span>`,
+          `<span style="color:#c62828;font-weight:bold;">-${record.discountPercent}%</span>`,
         );
       }
     }
