@@ -207,6 +207,20 @@ export class EmailService {
       ? '<p style="font-size:11px;color:#999;margin:8px 0 0;">Some covers omitted (too many deals to embed).</p>'
       : '';
 
+    const COLS = 3;
+    const ROW_HEIGHT = 200;
+    const rows: string[] = [];
+    for (let i = 0; i < cards.length; i += COLS) {
+      const rowCards = cards.slice(i, i + COLS);
+      const cells = rowCards
+        .map(
+          (card) =>
+            `<td width="${100 / COLS}%" valign="bottom" height="${ROW_HEIGHT}" style="padding:4px;">${card}</td>`,
+        )
+        .join('\n');
+      rows.push(`<tr>${cells}</tr>`);
+    }
+
     return [
       '<!DOCTYPE html>',
       '<html lang="en">',
@@ -220,14 +234,7 @@ export class EmailService {
       `<h1 style="font-size:20px;margin:0 0 4px;">Kobo deals for ${htmlEscape(dateLabel)}</h1>`,
       `<p style="font-size:13px;color:#555;margin:0 0 12px;">${htmlEscape(summary)}</p>`,
       '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:700px;">',
-      ...cards.map((card, i) => {
-        if (i % 3 === 0)
-          return `<tr>\n<td width="33.33%" valign="top" style="padding:4px;">${card}</td>`;
-        if (i % 3 === 2)
-          return `<td width="33.33%" valign="top" style="padding:4px;">${card}</td>\n</tr>`;
-        return `<td width="33.33%" valign="top" style="padding:4px;">${card}</td>`;
-      }),
-      cards.length % 3 !== 0 ? '</tr>' : '',
+      ...rows,
       '</table>',
       truncated,
       '<!--[if mso]></td></tr></table><![endif]-->',
@@ -265,14 +272,14 @@ export class EmailService {
       : htmlEscape(record.title);
 
     const coverCell = coverSrc
-      ? `<td width="110" valign="top" style="padding:8px 0 8px 8px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
+      ? `<td width="110" valign="bottom" style="padding:8px 0 8px 8px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
       : '';
 
     const lines = [
-      '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;">',
+      '<table cellpadding="0" cellspacing="0" border="0" width="100%" height="100%" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;">',
       '<tr>',
       coverCell,
-      `<td valign="top" style="padding:8px;font-family:Arial,Helvetica,sans-serif;">`,
+      `<td valign="bottom" style="padding:8px;font-family:Arial,Helvetica,sans-serif;">`,
       '<div style="margin-bottom:4px;">',
       `<span style="background:#0a7d30;color:#ffffff;font-size:10px;font-weight:bold;padding:1px 6px;border-radius:8px;">${badge}</span>`,
       ` <span style="background:#eeeeee;color:#555;font-size:10px;padding:1px 6px;border-radius:8px;">${source}</span>`,
