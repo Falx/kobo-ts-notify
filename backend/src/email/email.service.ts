@@ -126,14 +126,13 @@ export class EmailService {
       );
     }
     const transport = this.buildTransport(settings);
-    const attachments = [...covers.entries()]
-      .slice(0, settings.maxCovers)
-      .map(([cid, payload]) => ({
-        filename: `${cid}.jpg`,
-        content: payload.data,
-        contentType: payload.mime,
-        cid,
-      }));
+    const coverArray = [...covers.values()].slice(0, settings.maxCovers);
+    const attachments = coverArray.map((payload, index) => ({
+      filename: `cover${index}.jpg`,
+      content: payload.data,
+      contentType: payload.mime,
+      cid: `cover${index}`,
+    }));
     await transport.sendMail({
       from: settings.emailFrom,
       to: settings.emailTo,
