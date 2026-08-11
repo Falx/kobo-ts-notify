@@ -208,14 +208,13 @@ export class EmailService {
       : '';
 
     const COLS = 1;
-    const ROW_HEIGHT = 200;
     const rows: string[] = [];
     for (let i = 0; i < cards.length; i += COLS) {
       const rowCards = cards.slice(i, i + COLS);
       const cells = rowCards
         .map(
           (card) =>
-            `<td width="${100 / COLS}%" valign="bottom" height="${ROW_HEIGHT}" style="padding:4px;">${card}</td>`,
+            `<td width="${100 / COLS}%" valign="top" style="padding:4px;">${card}</td>`,
         )
         .join('\n');
       rows.push(`<tr>${cells}</tr>`);
@@ -272,14 +271,14 @@ export class EmailService {
       : htmlEscape(record.title);
 
     const coverCell = coverSrc
-      ? `<td width="110" valign="bottom" style="padding:10px 0 10px 10px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
+      ? `<td width="110" valign="top" style="padding:10px 0 10px 10px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
       : '';
 
     const lines = [
-      '<table cellpadding="0" cellspacing="0" border="0" width="100%" height="100%" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;">',
+      '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;">',
       '<tr>',
       coverCell,
-      `<td valign="bottom" style="padding:10px;font-family:Arial,Helvetica,sans-serif;">`,
+      `<td valign="top" style="padding:10px;font-family:Arial,Helvetica,sans-serif;">`,
       '<div style="margin-bottom:5px;">',
       `<span style="background:#0a7d30;color:#ffffff;font-size:11px;font-weight:bold;padding:2px 7px;border-radius:8px;">${badge}</span>`,
       ` <span style="background:#eeeeee;color:#555;font-size:11px;padding:2px 7px;border-radius:8px;">${source}</span>`,
