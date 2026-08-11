@@ -221,11 +221,13 @@ export class EmailService {
       `<p style="font-size:13px;color:#555;margin:0 0 12px;">${htmlEscape(summary)}</p>`,
       '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:700px;">',
       ...cards.map((card, i) => {
-        if (i % 2 === 0)
-          return `<tr>\n<td width="50%" valign="top" style="padding:6px;">${card}</td>`;
-        return `<td width="50%" valign="top" style="padding:6px;">${card}</td>\n</tr>`;
+        if (i % 3 === 0)
+          return `<tr>\n<td width="33.33%" valign="top" style="padding:4px;">${card}</td>`;
+        if (i % 3 === 2)
+          return `<td width="33.33%" valign="top" style="padding:4px;">${card}</td>\n</tr>`;
+        return `<td width="33.33%" valign="top" style="padding:4px;">${card}</td>`;
       }),
-      cards.length % 2 === 1 ? '</tr>' : '',
+      cards.length % 3 !== 0 ? '</tr>' : '',
       '</table>',
       truncated,
       '<!--[if mso]></td></tr></table><![endif]-->',
