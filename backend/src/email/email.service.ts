@@ -207,7 +207,7 @@ export class EmailService {
       ? '<p style="font-size:11px;color:#999;margin:8px 0 0;">Some covers omitted (too many deals to embed).</p>'
       : '';
 
-    const COLS = 3;
+    const COLS = 1;
     const ROW_HEIGHT = 200;
     const rows: string[] = [];
     for (let i = 0; i < cards.length; i += COLS) {
@@ -233,7 +233,7 @@ export class EmailService {
       '<!--[if mso]><table cellpadding="0" cellspacing="0" border="0" width="100%"><tr><td><![endif]-->',
       `<h1 style="font-size:20px;margin:0 0 4px;">Kobo deals for ${htmlEscape(dateLabel)}</h1>`,
       `<p style="font-size:13px;color:#555;margin:0 0 12px;">${htmlEscape(summary)}</p>`,
-      '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:700px;">',
+      '<table cellpadding="0" cellspacing="0" border="0" width="100%" style="max-width:1050px;">',
       ...rows,
       '</table>',
       truncated,
@@ -272,43 +272,43 @@ export class EmailService {
       : htmlEscape(record.title);
 
     const coverCell = coverSrc
-      ? `<td width="110" valign="bottom" style="padding:8px 0 8px 8px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
+      ? `<td width="110" valign="bottom" style="padding:10px 0 10px 10px;"><img src="${coverSrc}" alt="" width="110" style="display:block;border:0;width:110px;height:auto;border-radius:4px;"></td>`
       : '';
 
     const lines = [
       '<table cellpadding="0" cellspacing="0" border="0" width="100%" height="100%" style="background:#ffffff;border:1px solid #e0e0e0;border-radius:6px;">',
       '<tr>',
       coverCell,
-      `<td valign="bottom" style="padding:8px;font-family:Arial,Helvetica,sans-serif;">`,
-      '<div style="margin-bottom:4px;">',
-      `<span style="background:#0a7d30;color:#ffffff;font-size:10px;font-weight:bold;padding:1px 6px;border-radius:8px;">${badge}</span>`,
-      ` <span style="background:#eeeeee;color:#555;font-size:10px;padding:1px 6px;border-radius:8px;">${source}</span>`,
+      `<td valign="bottom" style="padding:10px;font-family:Arial,Helvetica,sans-serif;">`,
+      '<div style="margin-bottom:5px;">',
+      `<span style="background:#0a7d30;color:#ffffff;font-size:11px;font-weight:bold;padding:2px 7px;border-radius:8px;">${badge}</span>`,
+      ` <span style="background:#eeeeee;color:#555;font-size:11px;padding:2px 7px;border-radius:8px;">${source}</span>`,
       '</div>',
-      `<div style="font-size:13px;font-weight:bold;margin:0 0 2px;line-height:1.3;">${titleLink}</div>`,
+      `<div style="font-size:14px;font-weight:bold;margin:0 0 3px;line-height:1.3;">${titleLink}</div>`,
     ];
     if (record.author) {
       lines.push(
-        `<div style="font-size:11px;color:#555;margin:0 0 1px;">by ${htmlEscape(record.author)}</div>`,
+        `<div style="font-size:12px;color:#555;margin:0 0 2px;">by ${htmlEscape(record.author)}</div>`,
       );
     }
     if (record.series) {
       lines.push(
-        `<div style="font-size:10px;color:#777;margin:0 0 2px;">${htmlEscape(record.series)}</div>`,
+        `<div style="font-size:11px;color:#777;margin:0 0 3px;">${htmlEscape(record.series)}</div>`,
       );
     }
     lines.push(
-      `<div style="font-size:12px;margin:4px 0 0;">${this.priceLine(record)}</div>`,
+      `<div style="font-size:13px;margin:5px 0 0;">${this.priceLine(record)}</div>`,
     );
 
     const prevPrice = previousPrices[record.productId];
     if (prevPrice !== undefined && record.priceEur < prevPrice) {
       lines.push(
-        `<div style="font-size:10px;color:#7a7a7a;margin:1px 0 0;">Down from ${money(prevPrice)}</div>`,
+        `<div style="font-size:11px;color:#7a7a7a;margin:2px 0 0;">Down from ${money(prevPrice)}</div>`,
       );
     }
     if (record.language) {
       lines.push(
-        `<div style="font-size:9px;color:#999;margin:1px 0 0;">${htmlEscape(record.language)}</div>`,
+        `<div style="font-size:10px;color:#999;margin:2px 0 0;">${htmlEscape(record.language)}</div>`,
       );
     }
     lines.push('</td></tr></table>');
