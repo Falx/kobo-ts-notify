@@ -2,8 +2,13 @@
   <div>
     <h1>Deals</h1>
     <p class="subtitle">
-      {{ deals().length }} deal{{ deals().length === 1 ? '' : 's' }} matching your rules, from the
-      latest run.
+      @if (runAgoTimeString.hasValue()) {
+        @if (runAgoTimeString.value(); as agoString) {
+          Showing deals from latest run. ({{ agoString }} ago)
+        } @else {
+          Showing deals from latest run.
+        }
+      }
     </p>
   </div>
   <div class="actions">
@@ -57,7 +62,7 @@
 
   <div class="controls-row">
     <div class="control-group">
-      <mat-form-field appearance="outline" class="compact">
+      <mat-form-field appearance="outline" class="compact" subscriptSizing="dynamic">
         <mat-label>Source</mat-label>
         <mat-select [value]="source()" (selectionChange)="source.set($event.value); load()">
           <mat-option value="">All sources</mat-option>
@@ -66,7 +71,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="compact">
+      <mat-form-field appearance="outline" class="compact" subscriptSizing="dynamic">
         <mat-label>Min Discount</mat-label>
         <mat-select
           [value]="minDiscount()"
@@ -80,7 +85,7 @@
         </mat-select>
       </mat-form-field>
 
-      <mat-form-field appearance="outline" class="compact">
+      <mat-form-field appearance="outline" class="compact" subscriptSizing="dynamic">
         <mat-label>Sort by</mat-label>
         <mat-select [value]="sort()" (selectionChange)="sort.set($event.value); load()">
           <mat-option value="discount-desc">Biggest discount</mat-option>
@@ -117,15 +122,17 @@
       </mat-chip-option>
     </mat-chip-listbox>
 
-    @if (activeFilterCount() > 0) {
+    <div class="information-bar">
+      <div class="matches">{{ deals().length }} match{{ deals().length === 1 ? '' : 'es' }}</div>
       <mat-divider [vertical]="true" class="control-divider"></mat-divider>
-
       <div class="active-filters">
-        <span class="filter-count-badge">{{ activeFilterCount() }}</span>
-        <span class="filter-count-label">active</span>
-        <button mat-button class="clear-all-btn" (click)="clearFilters()">Clear all</button>
+        @if (activeFilterCount() > 0) {
+          <span class="filter-count-badge">{{ activeFilterCount() }}</span>
+          <span class="filter-count-label">active</span>
+          <button mat-button class="clear-all-btn" (click)="clearFilters()">Clear all</button>
+        }
       </div>
-    }
+    </div>
   </div>
 </div>
 

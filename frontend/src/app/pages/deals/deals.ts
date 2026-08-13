@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal, computed } from '@angular/core';
-import { Subject, Subscription, debounceTime } from 'rxjs';
+import { Subject, Subscription, debounceTime, map, of } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatChipsModule } from '@angular/material/chips';
 import { MatFormFieldModule } from '@angular/material/form-field';
@@ -12,6 +12,7 @@ import { MatDividerModule } from '@angular/material/divider';
 import { ApiService } from '../../shared/api.service';
 import type { Deal, SortKey } from '../../shared/models';
 import { DatePipe } from '@angular/common';
+import { rxResource } from '@angular/core/rxjs-interop';
 
 @Component({
   selector: 'app-deals',
@@ -73,9 +74,7 @@ export class DealsPage implements OnInit, OnDestroy {
   }
 
   ngOnInit() {
-    this.subs.push(
-      this.searchDebounce.pipe(debounceTime(350)).subscribe(() => this.load()),
-    );
+    this.subs.push(this.searchDebounce.pipe(debounceTime(350)).subscribe(() => this.load()));
     this.load();
   }
 
@@ -132,6 +131,28 @@ export class DealsPage implements OnInit, OnDestroy {
         },
       });
   }
+
+  protected runAgoTimeString = rxResource({
+    params: () => ({ deals: this.deals() }),
+    stream: ({ params: { deals } }) => {
+      if (deals.length === 0) return of('');
+      return this.api.runDetail(deals[0].runId).pipe(
+        map((runDetail) => {
+          const runTime = new Date(runDetail.run.startedAt);
+          const now = new Date();
+          const diffMs = now.getTime() - runTime.getTime();
+          const diffMinutes = Math.floor(diffMs / 60000);
+          const diffHours = Math.floor(diffMinutes / 60);
+          const diffDays = Math.floor(diffHours / 24);
+          return diffDays > 0
+            ? `${diffDays} days`
+            : diffHours > 0
+              ? `${diffHours} hours`
+              : `${diffMinutes} minutes`;
+        }),
+      );
+    },
+  });
 
   protected formatPrice(value: number): string {
     return `€${value.toFixed(2)}`;
