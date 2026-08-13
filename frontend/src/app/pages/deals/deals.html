@@ -2,7 +2,8 @@
   <div>
     <h1>Deals</h1>
     <p class="subtitle">
-      {{ deals().length }} deal{{ deals().length === 1 ? '' : 's' }} matching your rules, from the latest run.
+      {{ deals().length }} deal{{ deals().length === 1 ? '' : 's' }} matching your rules, from the
+      latest run.
     </p>
   </div>
   <div class="actions">
@@ -42,7 +43,12 @@
         placeholder="Search title or author…"
       />
       @if (q()) {
-        <button mat-icon-button class="clear-search" (click)="q.set(''); load()" aria-label="Clear search">
+        <button
+          mat-icon-button
+          class="clear-search"
+          (click)="q.set(''); load()"
+          aria-label="Clear search"
+        >
           <mat-icon>close</mat-icon>
         </button>
       }
@@ -62,7 +68,10 @@
 
       <mat-form-field appearance="outline" class="compact">
         <mat-label>Min Discount</mat-label>
-        <mat-select [value]="minDiscount()" (selectionChange)="minDiscount.set($event.value); load()">
+        <mat-select
+          [value]="minDiscount()"
+          (selectionChange)="minDiscount.set($event.value); load()"
+        >
           <mat-option [value]="0">Any</mat-option>
           <mat-option [value]="10">10%+</mat-option>
           <mat-option [value]="20">20%+</mat-option>
@@ -138,7 +147,11 @@
   <div class="grid">
     @for (deal of deals(); track deal.productId) {
       <mat-card class="deal-card" appearance="outlined">
-        <div class="cover">
+        <div
+          class="cover"
+          [class.owned]="deal.isOwned"
+          (click)="deal.isOwned ? null : toggleOwned(deal)"
+        >
           @if (deal.coverUrl) {
             <img [src]="deal.coverUrl" [alt]="deal.title" loading="lazy" />
           } @else {
@@ -147,10 +160,17 @@
             </div>
           }
           @if (deal.isOwned) {
-            <span class="owned-chip">
-              <mat-icon>check_circle</mat-icon> Owned
+            <span class="owned-chip" (click)="toggleOwned(deal); $event.stopPropagation()">
+              <mat-icon class="icon-default">check_circle</mat-icon>
+              <mat-icon class="icon-hover">close</mat-icon>
+              Owned
             </span>
-          } @else if (deal.discountPercent != null && deal.discountPercent > 0 && !deal.isFree) {
+          } @else {
+            <span class="owned-chip-hover">
+              <mat-icon>bookmark_border</mat-icon> Mark as Owned
+            </span>
+          }
+          @if (deal.discountPercent != null && deal.discountPercent > 0 && !deal.isFree) {
             <span class="discount-chip">-{{ deal.discountPercent }}%</span>
           } @else if (deal.isFree) {
             <span class="free-chip">FREE</span>
@@ -182,22 +202,21 @@
           </div>
 
           <div class="meta">
-            <span>First seen <b>{{ formatDate(deal.firstSeen) }}</b></span>
-            <span>Last seen <b>{{ formatDate(deal.lastSeen) }}</b></span>
+            <span
+              >First seen <b>{{ formatDate(deal.firstSeen) }}</b></span
+            >
+            <span
+              >Last seen <b>{{ formatDate(deal.lastSeen) }}</b></span
+            >
           </div>
         </mat-card-content>
 
         <mat-card-actions class="actions-row">
           <span class="lang">{{ deal.language }}</span>
-          <div class="actions-right">
-            <button mat-icon-button (click)="toggleOwned(deal)" [attr.aria-label]="deal.isOwned ? 'Mark as not owned' : 'Mark as owned'">
-              <mat-icon [class.owned-icon]="deal.isOwned">{{ deal.isOwned ? 'bookmark' : 'bookmark_border' }}</mat-icon>
-            </button>
-            <a mat-button color="primary" [href]="deal.url" target="_blank" rel="noopener">
-              View on Kobo
-              <mat-icon>open_in_new</mat-icon>
-            </a>
-          </div>
+          <a mat-button color="primary" [href]="deal.url" target="_blank" rel="noopener">
+            View on Kobo
+            <mat-icon>open_in_new</mat-icon>
+          </a>
         </mat-card-actions>
       </mat-card>
     }

@@ -109,8 +109,6 @@
   align-items: center;
   gap: 0.5rem;
   padding: 0.625rem 0.75rem;
-  border-top: 1px solid var(--mat-sys-outline-variant,
-    color-mix(in srgb, var(--mat-sys-on-surface) 8%, transparent));
 }
 
 .control-group {
@@ -219,6 +217,7 @@
   position: relative;
   height: 210px;
   background: color-mix(in srgb, var(--mat-sys-surface-container) 80%, transparent);
+  cursor: pointer;
 }
 
 .cover img {
@@ -245,31 +244,67 @@
 
 .discount-chip,
 .free-chip,
-.owned-chip {
+.owned-chip,
+.owned-chip-hover {
   position: absolute;
   top: 0.35rem;
   right: 0.35rem;
   background: #c62828;
   color: #fff;
-  font-weight: 600;
-  font-size: 0.68rem;
+  font-weight: 500;
+  font-size: 0.7rem;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  pointer-events: none;
 }
 
 .owned-chip {
   background: #1a4f8b;
   right: auto;
   left: 0.35rem;
-  display: flex;
-  align-items: center;
-  gap: 2px;
+  pointer-events: auto;
+  cursor: pointer;
+  transition: background 0.2s ease;
 }
 
-.owned-chip mat-icon {
+.owned-chip:hover {
+  background: #c62828;
+}
+
+.owned-chip mat-icon,
+.owned-chip-hover mat-icon {
   font-size: 12px;
   width: 12px;
   height: 12px;
+}
+
+.owned-chip .icon-hover {
+  display: none;
+}
+
+.owned-chip:hover .icon-default {
+  display: none;
+}
+
+.owned-chip:hover .icon-hover {
+  display: inline;
+}
+
+.owned-chip-hover {
+  background: rgba(0, 0, 0, 0.55);
+  color: #fff;
+  border: 1.5px dashed #fff;
+  right: auto;
+  left: 0.35rem;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.cover:hover .owned-chip-hover {
+  opacity: 1;
 }
 
 .free-chip {
@@ -292,8 +327,8 @@ mat-card-content {
 
 .tag {
   display: inline-block;
-  font-size: 0.6rem;
-  font-weight: 600;
+  font-size: 0.62rem;
+  font-weight: 500;
   line-height: 1;
   padding: 2px 5px;
   border-radius: 3px;
@@ -383,16 +418,6 @@ mat-card-content {
   justify-content: space-between;
   padding: 0.25rem 0.5rem;
   border-top: 1px solid var(--mat-sys-outline-variant, color-mix(in srgb, var(--mat-sys-on-surface) 10%, transparent));
-}
-
-.actions-right {
-  display: flex;
-  align-items: center;
-  gap: 0;
-}
-
-.owned-icon {
-  color: #1a4f8b;
 }
 
 .actions-row a {
