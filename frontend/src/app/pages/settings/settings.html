@@ -48,7 +48,14 @@
 
         <mat-form-field appearance="outline" class="half">
           <mat-label>Min discount (%)</mat-label>
-          <input matInput type="number" min="0" max="100" step="1" [(ngModel)]="draft.minDiscountPercent" />
+          <input
+            matInput
+            type="number"
+            min="0"
+            max="100"
+            step="1"
+            [(ngModel)]="draft.minDiscountPercent"
+          />
           <mat-hint>Minimum discount off the list price.</mat-hint>
         </mat-form-field>
 
@@ -82,87 +89,117 @@
       </mat-card-content>
     </mat-card>
 
-    <!-- Kobo pairing -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Kobo pairing</mat-card-title>
-        <mat-card-subtitle>
-          Connect your Kobo account so the wishlist and store APIs can be queried.
-        </mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content>
-        @if (paired()) {
-          <div class="status-row ok">
-            <mat-icon>check_circle</mat-icon>
-            <div>
-              <p class="status-title">Paired</p>
-              <p class="status-sub">{{ pairEmail() ?? 'Kobo account connected' }}</p>
-            </div>
-          </div>
-        } @else {
-          <div class="status-row idle">
-            <mat-icon>link_off</mat-icon>
-            <div>
-              <p class="status-title">Not paired</p>
-              <p class="status-sub">
-                Runs will skip the wishlist until you authenticate with Kobo.
-              </p>
-            </div>
-          </div>
-        }
-
-        @if (!pairingActive()) {
-          <button mat-stroked-button color="primary" (click)="startPairing()">
-            <mat-icon>link</mat-icon>
-            {{ paired() ? 'Re-pair with Kobo' : 'Pair with Kobo' }}
-          </button>
-        }
-
-        @if (pairingActive()) {
-          @if (pairingInfo() && !pairingStatus()) {
-            <div class="pairing-flow">
-              <div class="code-box">
-                <span class="code-label">Activation code</span>
-                <span class="code">{{ pairingInfo()!.activationCode }}</span>
+    <div class="group">
+      <!-- Kobo pairing -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Kobo pairing</mat-card-title>
+          <mat-card-subtitle>
+            Connect your Kobo account so the wishlist and store APIs can be queried.
+          </mat-card-subtitle>
+        </mat-card-header>
+        <mat-card-content>
+          @if (paired()) {
+            <div class="status-row ok">
+              <mat-icon>check_circle</mat-icon>
+              <div>
+                <p class="status-title">Paired</p>
+                <p class="status-sub">{{ pairEmail() ?? 'Kobo account connected' }}</p>
               </div>
-              <ol>
-                <li>Open <a [href]="pairingLink()" target="_blank" rel="noopener">kobo.com/activate</a></li>
-                <li>Enter the code above and confirm the page</li>
-                <li>This screen updates automatically once paired</li>
-              </ol>
-              <mat-progress-spinner diameter="24" mode="indeterminate" />
+            </div>
+          } @else {
+            <div class="status-row idle">
+              <mat-icon>link_off</mat-icon>
+              <div>
+                <p class="status-title">Not paired</p>
+                <p class="status-sub">
+                  Runs will skip the wishlist until you authenticate with Kobo.
+                </p>
+              </div>
             </div>
           }
-          @if (pairingStatus(); as st) {
-            @if (st.status === 'complete') {
-              <div class="status-row ok">
-                <mat-icon>check_circle</mat-icon>
-                <div>
-                  <p class="status-title">Paired successfully</p>
-                  <p class="status-sub">{{ st.email }}</p>
-                </div>
-              </div>
-            } @else if (st.status === 'pending') {
+
+          @if (!pairingActive()) {
+            <button mat-stroked-button color="primary" (click)="startPairing()">
+              <mat-icon>link</mat-icon>
+              {{ paired() ? 'Re-pair with Kobo' : 'Pair with Kobo' }}
+            </button>
+          }
+
+          @if (pairingActive()) {
+            @if (pairingInfo() && !pairingStatus()) {
               <div class="pairing-flow">
                 <div class="code-box">
                   <span class="code-label">Activation code</span>
                   <span class="code">{{ pairingInfo()!.activationCode }}</span>
                 </div>
-                <p>Waiting for you at
-                  <a [href]="pairingLink()" target="_blank" rel="noopener">kobo.com/activate</a>…</p>
+                <ol>
+                  <li>
+                    Open
+                    <a [href]="pairingLink()" target="_blank" rel="noopener">kobo.com/activate</a>
+                  </li>
+                  <li>Enter the code above and confirm the page</li>
+                  <li>This screen updates automatically once paired</li>
+                </ol>
                 <mat-progress-spinner diameter="24" mode="indeterminate" />
               </div>
-            } @else {
-              <div class="error-bar compact">
-                <mat-icon>error</mat-icon>
-                <span>{{ st.error ?? 'Pairing ' + st.status }}</span>
-              </div>
+            }
+            @if (pairingStatus(); as st) {
+              @if (st.status === 'complete') {
+                <div class="status-row ok">
+                  <mat-icon>check_circle</mat-icon>
+                  <div>
+                    <p class="status-title">Paired successfully</p>
+                    <p class="status-sub">{{ st.email }}</p>
+                  </div>
+                </div>
+              } @else if (st.status === 'pending') {
+                <div class="pairing-flow">
+                  <div class="code-box">
+                    <span class="code-label">Activation code</span>
+                    <span class="code">{{ pairingInfo()!.activationCode }}</span>
+                  </div>
+                  <p>
+                    Waiting for you at
+                    <a [href]="pairingLink()" target="_blank" rel="noopener">kobo.com/activate</a>…
+                  </p>
+                  <mat-progress-spinner diameter="24" mode="indeterminate" />
+                </div>
+              } @else {
+                <div class="error-bar compact">
+                  <mat-icon>error</mat-icon>
+                  <span>{{ st.error ?? 'Pairing ' + st.status }}</span>
+                </div>
+              }
             }
           }
-        }
-      </mat-card-content>
-    </mat-card>
+        </mat-card-content>
+      </mat-card>
 
+      <!-- Kobo API -->
+      <mat-card>
+        <mat-card-header>
+          <mat-card-title>Kobo API</mat-card-title>
+          <mat-card-subtitle
+            >Device/affiliate identifiers (change only if you know why).</mat-card-subtitle
+          >
+        </mat-card-header>
+        <mat-card-content class="form-grid">
+          <mat-form-field appearance="outline">
+            <mat-label>Platform ID</mat-label>
+            <input matInput [(ngModel)]="draft.koboDevicePlatformId" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="half">
+            <mat-label>Affiliate</mat-label>
+            <input matInput [(ngModel)]="draft.koboAffiliate" />
+          </mat-form-field>
+          <mat-form-field appearance="outline" class="half">
+            <mat-label>App version</mat-label>
+            <input matInput [(ngModel)]="draft.koboAppVersion" />
+          </mat-form-field>
+        </mat-card-content>
+      </mat-card>
+    </div>
     <!-- Email -->
     <mat-card>
       <mat-card-header>
@@ -187,8 +224,13 @@
 
         <mat-form-field appearance="outline" class="half">
           <mat-label>SMTP password</mat-label>
-          <input matInput type="password" [(ngModel)]="draft.smtpPassword" autocomplete="new-password"
-            [placeholder]="secretsSet() ? '•••••••• (leave blank to keep)' : ''" />
+          <input
+            matInput
+            type="password"
+            [(ngModel)]="draft.smtpPassword"
+            autocomplete="new-password"
+            [placeholder]="secretsSet() ? '•••••••• (leave blank to keep)' : ''"
+          />
         </mat-form-field>
 
         <mat-form-field appearance="outline" class="half">
@@ -208,7 +250,14 @@
 
         <mat-form-field appearance="outline" class="half">
           <mat-label>Cover download timeout (s)</mat-label>
-          <input matInput type="number" min="1" max="60" step="1" [(ngModel)]="draft.coverTimeoutSec" />
+          <input
+            matInput
+            type="number"
+            min="1"
+            max="60"
+            step="1"
+            [(ngModel)]="draft.coverTimeoutSec"
+          />
         </mat-form-field>
 
         <mat-slide-toggle [(ngModel)]="draft.smtpTls" name="smtpTls">
@@ -225,31 +274,23 @@
             Send test email
           </button>
           @if (emailTestResult()) {
-            <span class="test-result">{{ emailTestResult() }}</span>
+            <div class="test-result">{{ emailTestResult() }}</div>
           }
         </div>
-      </mat-card-content>
-    </mat-card>
 
-    <!-- Kobo API -->
-    <mat-card>
-      <mat-card-header>
-        <mat-card-title>Kobo API</mat-card-title>
-        <mat-card-subtitle>Device/affiliate identifiers (change only if you know why).</mat-card-subtitle>
-      </mat-card-header>
-      <mat-card-content class="form-grid">
-        <mat-form-field appearance="outline">
-          <mat-label>Platform ID</mat-label>
-          <input matInput [(ngModel)]="draft.koboDevicePlatformId" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="half">
-          <mat-label>Affiliate</mat-label>
-          <input matInput [(ngModel)]="draft.koboAffiliate" />
-        </mat-form-field>
-        <mat-form-field appearance="outline" class="half">
-          <mat-label>App version</mat-label>
-          <input matInput [(ngModel)]="draft.koboAppVersion" />
-        </mat-form-field>
+        <div class="test-row">
+          <button mat-stroked-button [disabled]="sendingSummary()" (click)="sendSummary()">
+            @if (sendingSummary()) {
+              <mat-progress-spinner diameter="18" mode="indeterminate" />
+            } @else {
+              <mat-icon>email</mat-icon>
+            }
+            Send summary email
+          </button>
+          @if (summaryResult()) {
+            <div class="test-result" [style.clear]="'both'">{{ summaryResult() }}</div>
+          }
+        </div>
       </mat-card-content>
     </mat-card>
   </div>

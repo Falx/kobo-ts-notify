@@ -1,6 +1,6 @@
 import { Injectable, inject } from '@angular/core';
 import { HttpClient, HttpParams } from '@angular/common/http';
-import { Observable, of, catchError } from 'rxjs';
+import { Observable, of } from 'rxjs';
 import type {
   AppSettings,
   DealsQuery,
@@ -13,6 +13,7 @@ import type {
   SettingsResponse,
 } from './models';
 import { MOCK_DEALS } from './mock-deals';
+import { renderMockEmail } from './mock-email-renderer';
 
 const BASE = '/api';
 const USE_MOCK = true; // Set to false when backend is running
@@ -174,6 +175,19 @@ export class ApiService {
       return of({ message: 'Mock: Test email sent successfully' });
     }
     return this.http.post<{ message: string }>(`${BASE}/email/test`, {});
+  }
+
+  sendSummaryEmail(): Observable<{ message: string }> {
+    if (USE_MOCK) {
+      const html = renderMockEmail(MOCK_DEALS);
+      const newWindow = window.open('', '_blank');
+      if (newWindow) {
+        newWindow.document.write(html);
+        newWindow.document.close();
+      }
+      return of({ message: `Preview opened with ${MOCK_DEALS.length} deals` });
+    }
+    return this.http.post<{ message: string }>(`${BASE}/email/send-summary`, {});
   }
 
   toggleOwned(productId: string): Observable<{ isOwned: boolean }> {

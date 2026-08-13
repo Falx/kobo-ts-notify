@@ -69,6 +69,10 @@ export class SettingsPage implements OnInit, OnDestroy {
   protected readonly testingEmail = signal(false);
   protected readonly emailTestResult = signal<string | null>(null);
 
+  // summary email
+  protected readonly sendingSummary = signal(false);
+  protected readonly summaryResult = signal<string | null>(null);
+
   ngOnInit() {
     this.loadAll();
   }
@@ -225,6 +229,21 @@ export class SettingsPage implements OnInit, OnDestroy {
       error: (err) => {
         this.emailTestResult.set(`Failed: ${apiError(err)}`);
         this.testingEmail.set(false);
+      },
+    });
+  }
+
+  protected sendSummary() {
+    this.sendingSummary.set(true);
+    this.summaryResult.set(null);
+    this.api.sendSummaryEmail().subscribe({
+      next: (res) => {
+        this.summaryResult.set(res.message);
+        this.sendingSummary.set(false);
+      },
+      error: (err) => {
+        this.summaryResult.set(`Failed: ${apiError(err)}`);
+        this.sendingSummary.set(false);
       },
     });
   }
