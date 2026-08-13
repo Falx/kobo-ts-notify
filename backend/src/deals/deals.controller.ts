@@ -1,4 +1,4 @@
-import { Controller, Get, Param, Query } from '@nestjs/common';
+import { Controller, Get, Param, Patch, Query } from '@nestjs/common';
 import { StateService } from '../state/state.service';
 import type { SnapshotRow } from '../state/state.service';
 import { DealsQueryDto } from '../api/dto';
@@ -18,6 +18,7 @@ export interface DealDto {
   isFree: boolean;
   isNew: boolean;
   isPriceDrop: boolean;
+  isOwned: boolean;
   firstSeen: string;
   lastSeen: string;
   runId: number;
@@ -45,6 +46,10 @@ export class DealsController {
     if (query.source) deals = deals.filter((d) => d.source === query.source);
     if (isTruthy(query.isNew)) deals = deals.filter((d) => d.isNew);
     if (isTruthy(query.isDrop)) deals = deals.filter((d) => d.isPriceDrop);
+    if (query.isOwned !== undefined) {
+      const showOwned = isTruthy(query.isOwned);
+      deals = deals.filter((d) => d.isOwned === showOwned);
+    }
     if (query.minDiscount !== undefined) {
       deals = deals.filter(
         (d) => (d.discountPercent ?? 0) >= (query.minDiscount ?? 0),
@@ -97,6 +102,14 @@ export class DealsController {
     }));
   }
 
+  /** Toggle owned status for a product. */
+  @Patch(':productId/owned')
+  toggleOwned(@Param('productId') productId: string): { isOwned: boolean } {
+    const decoded = decodeURIComponentSafe(productId || '');
+    const isOwned = this.state.toggleOwned(decoded);
+    return { isOwned };
+  }
+
   private toDealDto(snap: SnapshotRow): DealDto {
     const product = this.state.getCurrentProduct(snap.productId);
     return {
@@ -114,6 +127,7 @@ export class DealsController {
       isFree: snap.priceEur <= 0,
       isNew: snap.isNew,
       isPriceDrop: snap.isPriceDrop,
+      isOwned: snap.isOwned,
       firstSeen: product?.firstSeen ?? '',
       lastSeen: product?.lastSeen ?? '',
       runId: snap.runId,

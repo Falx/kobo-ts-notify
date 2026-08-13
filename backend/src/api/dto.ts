@@ -94,6 +94,10 @@ export class DealsQueryDto {
   isDrop?: string;
 
   @IsOptional()
+  @IsIn(['true', 'false', '1', '0'])
+  isOwned?: string;
+
+  @IsOptional()
   @Type(() => Number)
   @IsNumber()
   @Min(0)

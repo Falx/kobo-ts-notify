@@ -61,6 +61,7 @@ export class RunsController {
         isFree: s.priceEur <= 0,
         isNew: s.isNew,
         isPriceDrop: s.isPriceDrop,
+        isOwned: s.isOwned,
         firstSeen: '',
         lastSeen: '',
         runId: s.runId,

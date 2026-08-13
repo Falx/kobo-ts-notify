@@ -46,6 +46,7 @@ export class DealsPage implements OnInit, OnDestroy {
   protected readonly source = signal<'' | 'wishlist' | 'bestdeals'>('');
   protected readonly onlyNew = signal(false);
   protected readonly onlyDrop = signal(false);
+  protected readonly onlyNotOwned = signal(false);
   protected readonly minDiscount = signal(0);
   protected readonly sort = signal<SortKey>('discount-desc');
 
@@ -54,6 +55,7 @@ export class DealsPage implements OnInit, OnDestroy {
     if (this.source()) count++;
     if (this.onlyNew()) count++;
     if (this.onlyDrop()) count++;
+    if (this.onlyNotOwned()) count++;
     if (this.minDiscount()) count++;
     if (this.q()) count++;
     return count;
@@ -64,6 +66,7 @@ export class DealsPage implements OnInit, OnDestroy {
     this.source.set('');
     this.onlyNew.set(false);
     this.onlyDrop.set(false);
+    this.onlyNotOwned.set(false);
     this.minDiscount.set(0);
     this.sort.set('discount-desc');
     this.load();
@@ -113,6 +116,7 @@ export class DealsPage implements OnInit, OnDestroy {
         source: this.source() || undefined,
         isNew: this.onlyNew() || undefined,
         isDrop: this.onlyDrop() || undefined,
+        isOwned: this.onlyNotOwned() ? false : undefined,
         minDiscount: this.minDiscount() || undefined,
         q: this.q() || undefined,
         sort: this.sort(),
@@ -136,6 +140,21 @@ export class DealsPage implements OnInit, OnDestroy {
   protected formatDate(value: string): string {
     if (!value) return '—';
     return this.datePipe.transform(value, 'MMM d, yyyy @ HH:mm') || '—';
+  }
+
+  protected toggleOwned(deal: Deal): void {
+    this.api.toggleOwned(deal.productId).subscribe({
+      next: (result) => {
+        this.deals.update((deals) =>
+          deals.map((d) =>
+            d.productId === deal.productId ? { ...d, isOwned: result.isOwned } : d,
+          ),
+        );
+      },
+      error: (err) => {
+        this.error.set(apiError(err));
+      },
+    });
   }
 }
 

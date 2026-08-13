@@ -13,6 +13,7 @@ export interface Deal {
   isFree: boolean;
   isNew: boolean;
   isPriceDrop: boolean;
+  isOwned: boolean;
   firstSeen: string;
   lastSeen: string;
   runId: number;
@@ -45,6 +46,7 @@ export interface DealsQuery {
   source?: string;
   isNew?: boolean;
   isDrop?: boolean;
+  isOwned?: boolean;
   minDiscount?: number;
   q?: string;
   sort?: SortKey;

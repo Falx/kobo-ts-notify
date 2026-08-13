@@ -21,7 +21,23 @@ export class DbService implements OnModuleDestroy {
     db.pragma('journal_mode = WAL');
     db.pragma('busy_timeout = 10000');
     db.exec(_SCHEMA);
+    this.migrate(db);
     this.db = db;
+  }
+
+  private migrate(db: Database.Database): void {
+    const columns = db.prepare('PRAGMA table_info(products)').all() as {
+      name: string;
+    }[];
+    const hasOwned = columns.some((c) => c.name === 'is_owned');
+    if (!hasOwned) {
+      db.exec(
+        'ALTER TABLE products ADD COLUMN is_owned INTEGER NOT NULL DEFAULT 0',
+      );
+      db.exec(
+        'CREATE INDEX IF NOT EXISTS idx_products_owned ON products(is_owned)',
+      );
+    }
   }
 
   get connection(): Database.Database {
@@ -55,6 +71,7 @@ CREATE TABLE IF NOT EXISTS products (
   price_eur        REAL NOT NULL,
   was_price_eur    REAL,
   discount_percent INTEGER,
+  is_owned         INTEGER NOT NULL DEFAULT 0,
   first_seen       TEXT NOT NULL,
   last_seen        TEXT NOT NULL
 );
@@ -95,4 +112,5 @@ CREATE TABLE IF NOT EXISTS deal_snapshots (
 CREATE INDEX IF NOT EXISTS idx_snapshots_run ON deal_snapshots(run_id);
 CREATE INDEX IF NOT EXISTS idx_snapshots_product ON deal_snapshots(product_id);
 CREATE INDEX IF NOT EXISTS idx_runs_started ON runs(started_at);
+CREATE INDEX IF NOT EXISTS idx_products_owned ON products(is_owned);
 `;

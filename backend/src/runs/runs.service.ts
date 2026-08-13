@@ -117,6 +117,7 @@ export class RunsService {
         discountPercent: record.discountPercent,
         isNew,
         isPriceDrop,
+        isOwned: current?.isOwned ?? false,
       };
       snapshotByProduct.set(record.productId, snapshot);
       return snapshot;
@@ -138,7 +139,12 @@ export class RunsService {
     );
 
     if (!cfg.dryRun) {
-      this.state.upsertProducts(records);
+      this.state.upsertProducts(
+        records.map((r) => ({
+          ...r,
+          isOwned: this.state.getCurrentProduct(r.productId)?.isOwned ?? false,
+        })),
+      );
       this.logger.log(
         `Run #${runId}: price history updated for ${records.length} deal(s)`,
       );

@@ -77,4 +77,11 @@ export class ApiService {
   sendTestEmail(): Observable<{ message: string }> {
     return this.http.post<{ message: string }>(`${BASE}/email/test`, {});
   }
+
+  toggleOwned(productId: string): Observable<{ isOwned: boolean }> {
+    return this.http.patch<{ isOwned: boolean }>(
+      `${BASE}/deals/${encodeURIComponent(productId)}/owned`,
+      {},
+    );
+  }
 }

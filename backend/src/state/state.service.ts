@@ -14,6 +14,7 @@ export interface StoredDeal {
   priceEur: number;
   wasPriceEur: number | null;
   discountPercent: number | null;
+  isOwned: boolean;
 }
 
 export interface RunRow {
@@ -85,6 +86,7 @@ export class StateService {
           price_eur: number;
           was_price_eur: number | null;
           discount_percent: number | null;
+          is_owned: number;
           first_seen: string;
           last_seen: string;
         }
@@ -93,6 +95,7 @@ export class StateService {
       ? toStoredDeal(row, {
           firstSeen: row.first_seen,
           lastSeen: row.last_seen,
+          isOwned: Boolean(row.is_owned),
         })
       : null;
   }
@@ -204,19 +207,24 @@ export class StateService {
 
   snapshotsForRun(runId: number): SnapshotRow[] {
     const rows = this.db.connection
-      .prepare('SELECT * FROM deal_snapshots WHERE run_id = ?')
-      .all(runId) as Array<SnapshotRawRow>;
+      .prepare(
+        `SELECT s.*, p.is_owned FROM deal_snapshots s
+         LEFT JOIN products p ON p.product_id = s.product_id
+         WHERE s.run_id = ?`,
+      )
+      .all(runId) as Array<SnapshotRawRow & { is_owned: number }>;
     return rows.map(toSnapshotRow);
   }
 
   historyForProduct(productId: string): SnapshotRow[] {
     const rows = this.db.connection
       .prepare(
-        `SELECT s.*, r.finished_at AS _finished_at FROM deal_snapshots s
+        `SELECT s.*, p.is_owned FROM deal_snapshots s
          JOIN runs r ON r.id = s.run_id
+         LEFT JOIN products p ON p.product_id = s.product_id
          WHERE s.product_id = ? ORDER BY s.run_id ASC`,
       )
-      .all(productId) as Array<SnapshotRawRow>;
+      .all(productId) as Array<SnapshotRawRow & { is_owned: number }>;
     return rows.map((r) => toSnapshotRow(r));
   }
 
@@ -224,6 +232,18 @@ export class StateService {
     const run = this.getLatestCompletedRun();
     if (!run) return [];
     return this.snapshotsForRun(run.id);
+  }
+
+  toggleOwned(productId: string): boolean {
+    const row = this.db.connection
+      .prepare('SELECT is_owned FROM products WHERE product_id = ?')
+      .get(productId) as { is_owned: number } | undefined;
+    if (!row) return false;
+    const newValue = row.is_owned === 0 ? 1 : 0;
+    this.db.connection
+      .prepare('UPDATE products SET is_owned = ? WHERE product_id = ?')
+      .run(newValue, productId);
+    return newValue === 1;
   }
 }
 
@@ -261,7 +281,7 @@ function toDbRow(d: StoredDeal) {
 
 function toStoredDeal(
   row: StoreRowBase,
-  extra: { firstSeen?: string; lastSeen?: string } = {},
+  extra: { firstSeen?: string; lastSeen?: string; isOwned?: boolean } = {},
 ): StoredDeal & { firstSeen: string; lastSeen: string } {
   return {
     productId: row.product_id,
@@ -275,6 +295,7 @@ function toStoredDeal(
     priceEur: row.price_eur,
     wasPriceEur: row.was_price_eur,
     discountPercent: row.discount_percent,
+    isOwned: extra.isOwned ?? false,
     firstSeen: extra.firstSeen ?? '',
     lastSeen: extra.lastSeen ?? '',
   };
@@ -314,6 +335,7 @@ interface SnapshotRawRow extends StoreRowBase {
   run_id: number;
   is_new: number;
   is_price_drop: number;
+  is_owned?: number;
 }
 
 function toSnapshotRow(row: SnapshotRawRow): SnapshotRow {
@@ -332,6 +354,7 @@ function toSnapshotRow(row: SnapshotRawRow): SnapshotRow {
     discountPercent: row.discount_percent,
     isNew: Boolean(row.is_new),
     isPriceDrop: Boolean(row.is_price_drop),
+    isOwned: Boolean(row.is_owned),
   };
 }
 

@@ -244,7 +244,8 @@
 }
 
 .discount-chip,
-.free-chip {
+.free-chip,
+.owned-chip {
   position: absolute;
   top: 0.35rem;
   right: 0.35rem;
@@ -254,6 +255,21 @@
   font-size: 0.68rem;
   padding: 0.15rem 0.45rem;
   border-radius: 999px;
+}
+
+.owned-chip {
+  background: #1a4f8b;
+  right: auto;
+  left: 0.35rem;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.owned-chip mat-icon {
+  font-size: 12px;
+  width: 12px;
+  height: 12px;
 }
 
 .free-chip {
@@ -367,6 +383,16 @@ mat-card-content {
   justify-content: space-between;
   padding: 0.25rem 0.5rem;
   border-top: 1px solid var(--mat-sys-outline-variant, color-mix(in srgb, var(--mat-sys-on-surface) 10%, transparent));
+}
+
+.actions-right {
+  display: flex;
+  align-items: center;
+  gap: 0;
+}
+
+.owned-icon {
+  color: #1a4f8b;
 }
 
 .actions-row a {
