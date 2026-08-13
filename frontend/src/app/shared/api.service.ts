@@ -16,7 +16,7 @@ import { MOCK_DEALS } from './mock-deals';
 import { renderMockEmail } from './mock-email-renderer';
 
 const BASE = '/api';
-const USE_MOCK = true; // Set to false when backend is running
+const USE_MOCK = false; // Set to false when backend is running
 
 @Injectable({ providedIn: 'root' })
 export class ApiService {
@@ -151,7 +151,9 @@ export class ApiService {
     return this.http.get<SettingsResponse>(`${BASE}/settings`);
   }
 
-  updateSettings(patch: Partial<AppSettings> & { smtpPassword?: string }): Observable<SettingsResponse> {
+  updateSettings(
+    patch: Partial<AppSettings> & { smtpPassword?: string },
+  ): Observable<SettingsResponse> {
     return this.http.put<SettingsResponse>(`${BASE}/settings`, patch);
   }
 
