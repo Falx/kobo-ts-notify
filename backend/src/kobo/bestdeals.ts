@@ -170,6 +170,7 @@ export class BestDealsCrawler {
   private async fetchFeaturedPage(
     listId: string,
     page: number,
+    allowRetry = true,
   ): Promise<Record<string, unknown>> {
     const url = new URL(FEATURED_URL_TEMPLATE.replace('{listId}', listId));
     // Lowercase pair only — sending both casings together is rejected (HTTP 400).
@@ -180,6 +181,13 @@ export class BestDealsCrawler {
       Object.assign(headers, this.auth.getAuthHeaders());
     }
     const response = await fetch(url, { headers });
+    if (response.status === 401 && allowRetry) {
+      this.logger.log(
+        `featured list ${listId} page ${page} got HTTP 401 — refreshing auth tokens and retrying once`,
+      );
+      await this.auth.refresh();
+      return this.fetchFeaturedPage(listId, page, false);
+    }
     if (!response.ok) {
       const error = new Error(`HTTP ${response.status}`) as Error & {
         status?: number;

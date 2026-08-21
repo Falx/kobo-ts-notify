@@ -72,6 +72,9 @@ export class RunsService {
       );
     }
 
+    this.logger.log(`Run #${runId}: refreshing auth tokens`);
+    await this.auth.refresh();
+
     const cfg = this.settings.get();
     const engine = new DealEngine(
       cfg.priceThresholdEur,
