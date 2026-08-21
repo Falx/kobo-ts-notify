@@ -249,7 +249,7 @@ export class BestDealsCrawler {
       slug,
       imageId,
       language,
-      series: seriesFrom(book.Series),
+      series: seriesFrom(book.Series, book),
       url: slug ? bookUrl(slug) : '',
       source: 'bestdeals',
     };

@@ -82,18 +82,34 @@ export function authorFromContributors(contributors: unknown): string {
   return asStr(contributors);
 }
 
-/** Optional Series field: plain string or a dict with a name-ish key. */
-export function seriesFrom(series: unknown): string {
-  if (!series) return '';
-  if (typeof series === 'string') return series;
-  if (series && typeof series === 'object') {
-    for (const key of ['Title', 'Name', 'name', 'title']) {
-      const value = (series as JsonLike)[key];
-      if (value) return asStr(value);
+/** Optional Series field: plain string, a dict with a name-ish key, or SeriesName at the book level. */
+export function seriesFrom(series: unknown, book?: Record<string, unknown>): string {
+  let name = '';
+  if (series) {
+    if (typeof series === 'string') {
+      name = series;
+    } else if (typeof series === 'object') {
+      for (const key of ['Title', 'Name', 'name', 'title']) {
+        const value = (series as JsonLike)[key];
+        if (value) { name = asStr(value); break; }
+      }
+    } else {
+      name = asStr(series);
     }
-    return '';
   }
-  return asStr(series);
+  // Fallback: check SeriesName at the book level
+  if (!name && book) {
+    name = asStr(book['SeriesName']);
+  }
+  if (!name) return '';
+  // Append series number if available
+  if (book) {
+    const num = book['SeriesNumber'];
+    if (num !== undefined && num !== null && num !== '') {
+      return `${name} #${num}`;
+    }
+  }
+  return name;
 }
 
 export function languageOf(raw: unknown): string {
