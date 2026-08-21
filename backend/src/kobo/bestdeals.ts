@@ -13,6 +13,7 @@ import {
   toFloat,
 } from './parse';
 import { AuthService } from '../auth/auth.service';
+import { PlaywrightScraper } from './playwright-scraper';
 
 const BESTDEALS_URL = 'https://www.kobo.com/be/en/p/BestDeals';
 const FEATURED_URL_TEMPLATE =
@@ -60,12 +61,27 @@ const TRACK_INFO_RE = /data-track-info=(["'])(.*?)\1/gs;
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+/** Normalize a string for deduplication: lowercase, collapse whitespace, strip punctuation. */
+function normalizeForDedupe(s: string): string {
+  return s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u2018\u2019\u201a\u201b\u2032\u2035\u0060]/g, "'")
+    .replace(/[^a-z0-9\s]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
 @Injectable()
 export class BestDealsCrawler {
   private readonly logger = new Logger(BestDealsCrawler.name);
   private discovered: string[] | null = null;
 
-  constructor(private readonly auth: AuthService) {}
+  constructor(
+    private readonly auth: AuthService,
+    private readonly scraper: PlaywrightScraper,
+  ) {}
 
   async crawl(): Promise<DealSourceItem[]> {
     const listIds = await this.discoverSfLists();
@@ -76,10 +92,9 @@ export class BestDealsCrawler {
     const unique: DealSourceItem[] = [];
     const seen = new Set<string>();
     for (const deal of items) {
-      if (deal.productId) {
-        if (seen.has(deal.productId)) continue;
-        seen.add(deal.productId);
-      }
+      const key = `${normalizeForDedupe(deal.title)}|||${normalizeForDedupe(deal.author)}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
       unique.push(deal);
     }
     this.logger.log(`BestDeals crawl complete: ${unique.length} deal(s)`);
@@ -92,11 +107,10 @@ export class BestDealsCrawler {
     if (this.discovered) return this.discovered;
     let carousels: Array<{ listId: string; carouselName: string }> = [];
     try {
-      const response = await fetch(BESTDEALS_URL, { headers: BROWSER_HEADERS });
-      if (!response.ok) {
-        throw new Error(`BestDeals page returned HTTP ${response.status}`);
+      const html = await this.scraper.fetchPage(BESTDEALS_URL);
+      if (html) {
+        carousels = parseCarousels(html);
       }
-      carousels = parseCarousels(await response.text());
     } catch (error) {
       this.logger.warn(
         `BestDeals page unreachable (${(error as Error).message}) — using confirmed SF&F listId`,

@@ -1,9 +1,14 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { AuthService } from '../auth/auth.service';
 import { SettingsService } from '../config/settings.service';
-import { DealEngine, dedupeBest } from '../engine/deal-engine';
+import {
+  DealEngine,
+  dedupeBest,
+} from '../engine/deal-engine';
 import { BestDealsCrawler } from '../kobo/bestdeals';
 import { KoboClient } from '../kobo/kobo-client';
+import { PlaywrightScraper } from '../kobo/playwright-scraper';
+import { bookUrl } from '../kobo/urls';
 import { StateService } from '../state/state.service';
 import type { RunRow, SnapshotRow } from '../state/state.service';
 import { EmailService } from '../email/email.service';
@@ -19,6 +24,7 @@ export class RunsService {
     private readonly state: StateService,
     private readonly koboClient: KoboClient,
     private readonly crawler: BestDealsCrawler,
+    private readonly scraper: PlaywrightScraper,
     private readonly email: EmailService,
   ) {}
 
@@ -81,14 +87,73 @@ export class RunsService {
       cfg.minDiscountPercent,
     );
 
-    const wishlist = await this.koboClient.getWishlist();
+    // 1. Get wishlist
+    const rawWishlist = await this.koboClient.getWishlist();
+    this.logger.log(
+      `Wishlist: ${rawWishlist.map((w) => w.title).join(', ')}`,
+    );
+
+    // 2. For each wishlist book, search Kobo for cheaper editions
+    this.logger.log(
+      `Searching for cheaper editions of ${rawWishlist.length} wishlist book(s)...`,
+    );
+    const wishlist: typeof rawWishlist = [];
+    for (let i = 0; i < rawWishlist.length; i++) {
+      const item = rawWishlist[i];
+      try {
+        this.logger.log(`[${i + 1}/${rawWishlist.length}] Searching for "${item.title}"...`);
+        const searchResults = await this.scraper.search(item.title);
+        this.logger.log(
+          `"${item.title}": ${searchResults.length} result(s)`,
+        );
+        if (searchResults.length <= 1) {
+          wishlist.push(item);
+          continue;
+        }
+        // Match same title AND author, with a valid price, cheaper than current
+        const norm = (s: string) =>
+          s.toLowerCase().replace(/[''\u2018\u2019\u00b4`]/g, '').replace(/[^a-z0-9]/g, '');
+        const candidates = searchResults.filter(
+          (r) =>
+            norm(r.title) === norm(item.title) &&
+            norm(r.author) === norm(item.author) &&
+            r.price !== null &&
+            r.price > 0 &&
+            r.price < item.priceEur &&
+            r.slug !== item.slug,
+        );
+        if (candidates.length === 0) {
+          wishlist.push(item);
+          continue;
+        }
+        const cheapest = candidates.reduce((a, b) =>
+          (a.price ?? Infinity) < (b.price ?? Infinity) ? a : b,
+        );
+        this.logger.log(
+          `"${item.title}": cheaper edition found — ${cheapest.price}€ (was ${item.priceEur}€, slug: ${cheapest.slug})`,
+        );
+        wishlist.push({
+          ...item,
+          slug: cheapest.slug,
+          url: bookUrl(cheapest.slug),
+          priceEur: cheapest.price!,
+          wasPriceEur: item.priceEur,
+        });
+      } catch {
+        wishlist.push(item);
+      }
+      if (i < rawWishlist.length - 1) {
+        await new Promise((r) => setTimeout(r, 1000));
+      }
+    }
+
     const wishlistRecords = engine.process(wishlist, 'wishlist');
 
     const bestdeals = await this.crawler.crawl();
     const bestdealsRecords = engine.process(bestdeals, 'bestdeals');
 
     const records = dedupeBest([...wishlistRecords, ...bestdealsRecords]);
-    const itemsScanned = wishlist.length + bestdeals.length;
+    const itemsScanned = rawWishlist.length + bestdeals.length;
     this.logger.log(
       `Run #${runId}: scanned ${itemsScanned} item(s), ${records.length} deal(s) after dedupe`,
     );
