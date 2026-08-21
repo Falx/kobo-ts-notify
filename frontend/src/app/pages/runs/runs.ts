@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { Subscription, interval } from 'rxjs';
+import { Subscription } from 'rxjs';
 import { MatCardModule } from '@angular/material/card';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
@@ -39,18 +39,16 @@ export class RunsPage implements OnInit, OnDestroy {
   protected readonly loadingDeal = signal<number | null>(null);
 
   private readonly subs: Subscription[] = [];
+  private pollTimer: ReturnType<typeof setTimeout> | null = null;
+  private static readonly POLL_INTERVAL_MS = 2000;
 
   ngOnInit() {
     this.load();
-    this.subs.push(
-      interval(20000).subscribe(() => {
-        if (this.hasActive()) this.load();
-      }),
-    );
   }
 
   ngOnDestroy() {
     this.subs.forEach((s) => s.unsubscribe());
+    this.stopPolling();
   }
 
   protected refresh() {
@@ -61,10 +59,9 @@ export class RunsPage implements OnInit, OnDestroy {
     this.running.set(true);
     this.error.set(null);
     this.api.triggerRun().subscribe({
-      next: () => {
+      next: (result) => {
         this.running.set(false);
-        this.load();
-        setTimeout(() => this.load(), 1500);
+        this.load(true, result.runId);
       },
       error: (err) => {
         this.running.set(false);
@@ -77,19 +74,61 @@ export class RunsPage implements OnInit, OnDestroy {
     return this.runs().some((r) => r.status === 'pending' || r.status === 'running');
   }
 
-  protected load() {
+  protected load(expandNew = false, newRunId?: number) {
     this.loading.set(true);
     this.error.set(null);
     this.api.listRuns().subscribe({
       next: (runs) => {
         this.runs.set(runs);
         this.loading.set(false);
+
+        if (expandNew && newRunId !== undefined) {
+          const next = new Set<number>([newRunId]);
+          this.openRuns.set(next);
+          this.fetchDeals(newRunId);
+        }
+
+        if (this.hasActive()) {
+          this.startPolling();
+        } else {
+          this.stopPolling();
+        }
       },
       error: (err) => {
         this.error.set(apiError(err));
         this.loading.set(false);
       },
     });
+  }
+
+  private startPolling() {
+    if (this.pollTimer !== null) return;
+    this.poll();
+  }
+
+  private poll() {
+    this.pollTimer = setTimeout(() => {
+      this.api.listRuns().subscribe({
+        next: (runs) => {
+          this.runs.set(runs);
+          if (this.hasActive()) {
+            this.poll();
+          } else {
+            this.stopPolling();
+          }
+        },
+        error: () => {
+          this.stopPolling();
+        },
+      });
+    }, RunsPage.POLL_INTERVAL_MS);
+  }
+
+  private stopPolling() {
+    if (this.pollTimer !== null) {
+      clearTimeout(this.pollTimer);
+      this.pollTimer = null;
+    }
   }
 
   protected toggleDetails(runId: number) {
