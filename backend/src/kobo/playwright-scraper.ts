@@ -16,6 +16,7 @@ export class PlaywrightScraper implements OnModuleDestroy {
   private readonly logger = new Logger(PlaywrightScraper.name);
   private browser: Browser | null = null;
   private requestCount = 0;
+  private readonly canRotate = process.env.PLAYWRIGHT_NO_ROTATE !== '1';
   private readonly MAX_REQUESTS_BEFORE_ROTATE = 8;
 
   async onModuleDestroy(): Promise<void> {
@@ -26,7 +27,7 @@ export class PlaywrightScraper implements OnModuleDestroy {
 
   private async getBrowser(): Promise<Browser> {
     this.requestCount++;
-    if (this.requestCount > this.MAX_REQUESTS_BEFORE_ROTATE) {
+    if (this.canRotate && this.requestCount > this.MAX_REQUESTS_BEFORE_ROTATE) {
       this.logger.log('Rotating browser session to avoid detection');
       await this.browser?.close().catch(() => {});
       this.browser = null;

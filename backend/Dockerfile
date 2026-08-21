@@ -13,6 +13,9 @@ RUN apt-get update \
 COPY package.json package-lock.json ./
 RUN npm ci
 
+# Install Playwright browsers during build (has build tools for native deps)
+RUN npx playwright install --with-deps chromium
+
 COPY nest-cli.json tsconfig.json tsconfig.build.json ./
 COPY src ./src
 RUN npm run build
@@ -25,6 +28,10 @@ FROM node:24-bookworm-slim AS runtime
 WORKDIR /app
 ENV NODE_ENV=production
 ENV DATA_DIR=/app/data
+
+# Copy Playwright browsers from build stage
+COPY --from=build /ms-playwright /ms-playwright
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright
 
 COPY --from=build /app/package.json ./
 COPY --from=build /app/node_modules ./node_modules
