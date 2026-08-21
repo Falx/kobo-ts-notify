@@ -37,6 +37,7 @@ export class RunsPage implements OnInit, OnDestroy {
 
   protected readonly openRuns = signal<Set<number>>(new Set());
   protected readonly loadingDeal = signal<number | null>(null);
+  private userToggled = false;
 
   private readonly subs: Subscription[] = [];
   private pollTimer: ReturnType<typeof setTimeout> | null = null;
@@ -68,6 +69,24 @@ export class RunsPage implements OnInit, OnDestroy {
         this.error.set(apiError(err));
       },
     });
+  }
+
+  protected onHeaderMouseDown() {
+    this.userToggled = true;
+  }
+
+  protected onExpandedChange(runId: number, expanded: boolean) {
+    if (!this.userToggled) return;
+    this.userToggled = false;
+
+    const next = new Set(this.openRuns());
+    if (expanded) {
+      next.add(runId);
+      if (!this.runDeals.has(runId)) this.fetchDeals(runId);
+    } else {
+      next.delete(runId);
+    }
+    this.openRuns.set(next);
   }
 
   private hasActive(): boolean {
@@ -131,20 +150,7 @@ export class RunsPage implements OnInit, OnDestroy {
     }
   }
 
-  protected toggleDetails(runId: number) {
-    const next = new Set(this.openRuns());
-    const currentlyOpen = this.openRuns().has(runId);
-
-    // close all others, keep the UI focused
-    next.clear();
-    if (!currentlyOpen) {
-      next.add(runId);
-      if (!this.runDeals.has(runId)) this.fetchDeals(runId);
-    }
-    this.openRuns.set(next);
-  }
-
-  private fetchDeals(runId: number) {
+  protected fetchDeals(runId: number) {
     this.loadingDeal.set(runId);
     this.api.runDetail(runId).subscribe({
       next: (detail) => {

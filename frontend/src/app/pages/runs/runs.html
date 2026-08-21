@@ -40,9 +40,9 @@
     @for (run of runs(); track run.id) {
       <mat-expansion-panel
         [expanded]="openRuns().has(run.id)"
-        (expandedChange)="toggleDetails(run.id)"
+        (expandedChange)="onExpandedChange(run.id, $event)"
       >
-        <mat-expansion-panel-header>
+        <mat-expansion-panel-header (mousedown)="onHeaderMouseDown()">
           <mat-panel-title class="run-title">
             <span class="run-no">#{{ run.id }}</span>
             <mat-chip class="chip-{{ run.status }}" [disabled]="true">
