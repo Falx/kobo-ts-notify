@@ -16,19 +16,9 @@
       <mat-icon>refresh</mat-icon>
       Refresh
     </button>
-    <button mat-flat-button color="primary" [disabled]="running()" (click)="runNow()">
-      <mat-icon>play_arrow</mat-icon>
-      {{ running() ? 'Running…' : 'Check now' }}
-    </button>
   </div>
 </div>
 
-@if (message()) {
-  <mat-card class="info-bar">
-    <mat-icon>info</mat-icon>
-    <span>{{ message() }}</span>
-  </mat-card>
-}
 @if (error()) {
   <mat-card class="error-bar">
     <mat-icon>error</mat-icon>
@@ -146,7 +136,7 @@
   <mat-card class="empty">
     <mat-icon class="empty-icon">local_library</mat-icon>
     <p>No deals found with the current filters.</p>
-    <p class="hint">Run a check, or start pairing in Settings if Kobo isn't connected yet.</p>
+    <p class="hint">Start pairing in Settings if Kobo isn't connected yet.</p>
   </mat-card>
 }
 

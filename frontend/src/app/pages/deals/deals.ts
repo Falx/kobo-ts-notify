@@ -39,9 +39,7 @@ export class DealsPage implements OnInit, OnDestroy {
 
   protected readonly deals = signal<Deal[]>([]);
   protected readonly loading = signal(false);
-  protected readonly running = signal(false);
   protected readonly error = signal<string | null>(null);
-  protected readonly message = signal<string | null>(null);
 
   protected readonly q = signal('');
   protected readonly source = signal<'' | 'wishlist' | 'bestdeals'>('');
@@ -89,22 +87,6 @@ export class DealsPage implements OnInit, OnDestroy {
 
   protected refresh() {
     this.load();
-  }
-
-  protected runNow() {
-    this.running.set(true);
-    this.message.set('Starting a run — this scans the wishlist and BestDeals...');
-    this.api.triggerRun().subscribe({
-      next: () => {
-        this.message.set('Run started. Refresh in a moment to see new deals.');
-        this.running.set(false);
-        setTimeout(() => this.load(), 1500);
-      },
-      error: (err) => {
-        this.running.set(false);
-        this.error.set(apiError(err));
-      },
-    });
   }
 
   protected load() {

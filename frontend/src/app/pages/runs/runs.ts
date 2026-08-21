@@ -28,6 +28,7 @@ export class RunsPage implements OnInit, OnDestroy {
   protected readonly runs = signal<Run[]>([]);
   protected readonly loading = signal(false);
   protected readonly refreshing = signal(false);
+  protected readonly running = signal(false);
   protected readonly error = signal<string | null>(null);
 
   /** run id -> cached deals, as loaded by the expansion panel. */
@@ -54,6 +55,22 @@ export class RunsPage implements OnInit, OnDestroy {
 
   protected refresh() {
     this.load();
+  }
+
+  protected runNow() {
+    this.running.set(true);
+    this.error.set(null);
+    this.api.triggerRun().subscribe({
+      next: () => {
+        this.running.set(false);
+        this.load();
+        setTimeout(() => this.load(), 1500);
+      },
+      error: (err) => {
+        this.running.set(false);
+        this.error.set(apiError(err));
+      },
+    });
   }
 
   private hasActive(): boolean {

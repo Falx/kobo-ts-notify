@@ -8,6 +8,10 @@
       <mat-icon>refresh</mat-icon>
       Refresh
     </button>
+    <button mat-flat-button color="primary" [disabled]="running()" (click)="runNow()">
+      <mat-icon>play_arrow</mat-icon>
+      {{ running() ? 'Running…' : 'New Run' }}
+    </button>
   </div>
 </div>
 
@@ -27,7 +31,7 @@
 @if (!loading() && runs().length === 0) {
   <mat-card class="empty">
     <mat-icon class="empty-icon">history</mat-icon>
-    <p>No runs yet. Press "Check now" on the Deals page to trigger the first one.</p>
+    <p>No runs yet. Press "New Run" to trigger the first one.</p>
   </mat-card>
 }
 
